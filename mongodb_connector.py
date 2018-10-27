@@ -20,3 +20,6 @@ class MongoDBConnector:
 
     async def remove_member(self,member_id):
         await self.db.members.delete_one({'id':member_id})
+
+    async def update(self,IDs,amount):
+        pass
