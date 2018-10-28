@@ -24,7 +24,7 @@ class MongoDBConnector:
         if await collection.find_one({'id': user.id}) is None:
             await collection.insert_one({'id': user.id, 'name': user.name})
 
-async def pay(self, guild_id, payee, paid_for, amount, message):
+    async def pay(self, guild_id, payee, paid_for, amount, message):
         """Handles required operations on DB after the paid coomand"""
         collection = self.db[str(guild_id)]
         #await add_user(user=payee, collection=collection)
@@ -40,6 +40,7 @@ async def pay(self, guild_id, payee, paid_for, amount, message):
                 values[str(member.id)] = values[str(member.id)] + amount
             else:
                 values[str(member.id)] = amount
+
         await collection.update_one({'id':payee.id}, {'$set': {'data': values}})
 
     async def get_unverified(self, user, guild_id):
