@@ -15,20 +15,32 @@ db_connector = MongoDBConnector(os.getenv('MONGODB_SRV'), db_name='manager_db', 
 bot = Bot(command_prefix=commands.when_mentioned_or("!"), description=desc, loop=loop)
 
 
-def not_expense(channel):
-    """Returns True if the parameter is not a expenses channel"""
-    return type(channel) is discord.channel.DMChannel or channel.name != "expenses"
+def is_DM(channel):
+    """Returns True if the expenses channel is a DM channel"""
+    return type(channel) is discord.channel.DMChannel
 
 
 def get_amount(message):
     """Get the amount of money from a message"""
-    for tokens in message.split(" "):
+    for tokens in message.content.split(" "):
         if is_int(tokens):
             return int(tokens)
 
 
 def fine_paid_message(message):
-    return len(message.mentions) > 0 and get_amount(message.content) is not None
+    return len(message.mentions) > 0 and get_amount(message) is not None and message.channel.name == "expenses"
+
+
+@bot.event
+async def on_guild_remove(guild):
+    """Will remove this guilds Data from DB"""
+    await db_connector.remove_guild(guild_id=guild.id)
+
+
+@bot.event
+async def on_guild_join(guild):
+    """Add this guild in DB"""
+    await db_connector.create_guild(name=guild.name, guild_id=guild.id)
 
 
 @bot.event
@@ -37,39 +49,38 @@ async def on_raw_reaction_add(payload):
     user = bot.get_user(payload.user_id)
     message = await channel.get_message(payload.message_id)
     mentions = message.mentions
-    if not not_expense(channel) and user in mentions and str(payload.emoji) == "👍🏽" and fine_paid_message(message):
+    if not is_DM(channel) and user in mentions and str(payload.emoji) == "👍🏽" and fine_paid_message(message):
         pass
-
-
-
 
 
 @bot.command()
 async def paid(ctx):
 
-    if not not_expense(ctx.message.channel):
+    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "expenses":
         # ADD message ID to db of the author of this command.
+        message = ctx.message
+        mentions = message.mentions
+        await db_connector.pay(guild_id=message.guild.id, payee=message.author, paid_for=mentions, amount=get_amount(message), message=message)
 
-        mentions = ctx.message.mentions
-        auth = ctx.message.author
-        IDs = [member.id for member in mentions]
-        amount = get_amount(ctx.message.content)
-        for member in mentions:
-            if member.dm_channel is None:
-                await member.create_dm()
-            message = "{0} paid {1} for you, If he/she really did, give a <thumbs up> to this message!".format(auth.mention, amount)
-            await member.dm_channel.send(message)
-    else:
-        await ctx.send("Please send me messages only in the expenses channel!")
+
 
 
 @bot.command()
-async def check(ctx):
-    mentions = ctx.message.mentions
-    me = bot.get_user(325320332971999244)
-    if me.dm_channel is None:
-        await me.create_dm()
-    await me.dm_channel.send(mentions[0].mention)
+async def stats(ctx):
+    """Shows the current stats of a member regarding his/her expenses"""
+    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "stats":
+        pass
+
+
+@bot.command()
+async def unverified(ctx):
+    """Shows all the members unverified payments"""
+    results = await db_connector.get_unverified(user=ctx.message.author, guild_id=ctx.message.guild.id)
+    msg = ""
+    print(results)
+    for result in results:
+        msg += result['message']+"\n"
+    await ctx.send(msg)
 
 
 bot.run(os.getenv('TOKEN'))
