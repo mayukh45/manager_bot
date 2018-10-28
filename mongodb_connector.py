@@ -27,7 +27,7 @@ class MongoDBConnector:
     async def pay(self, guild_id, payee, paid_for, amount, message):
         """Handles required operations on DB after the paid coomand"""
         collection = self.db[str(guild_id)]
-        #await add_user(user=payee, collection=collection)
+        await self.add_user(user=payee, collection=collection)
         await collection.update_one({'id': payee.id}, {'$push': {'unverified': {"message":message.content,"left":len(paid_for)}}})
         doc = await collection.find_one({'id':payee.id})
         if list(doc.keys()).count('data') == 0:
