@@ -1,6 +1,5 @@
 import asyncio
 import os
-import json
 import discord
 from discord.ext.commands import Bot
 from discord.ext import commands
@@ -28,7 +27,7 @@ def get_amount(message):
 
 
 def fine_paid_message(message):
-    return len(message.mentions) > 0 and get_amount(message) is not None and message.channel.name == "expenses"
+    return len(message.mentions) > 0 and get_amount(message) is not None and message.channel.name == "expenses" and message.content.split(" ")[0] == '!paid'
 
 
 @bot.event
@@ -55,42 +54,65 @@ async def on_raw_reaction_add(payload):
 
 @bot.command()
 async def paid(ctx):
-
+    """!paid <mentions> amount <description>"""
     if not is_DM(ctx.message.channel) and ctx.message.channel.name == "expenses":
-        message = ctx.message
-        mentions = message.mentions
-        await db_connector.pay(guild_id=message.guild.id, payee=message.author, paid_for=mentions, amount=get_amount(message), message=message)
+        if not fine_paid_message(ctx.message):
+            await ctx.send("Use `!help paid` to see the format")
+        else:
+            message = ctx.message
+            mentions = message.mentions
+            await db_connector.pay(guild_id=message.guild.id, payee=message.author, paid_for=mentions, amount=get_amount(message), message=message)
+    else:
+        await ctx.send("This command can be used only in `expenses` channel")
 
 
 @bot.command()
 async def stats(ctx):
     """Shows the current stats of a member regarding his/her expenses"""
-    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "stats":
-        pass
+
+    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
+        results = await db_connector.get_data(guild_id=ctx.message.guild.id, user=ctx.message.author)
+        msg = ""
+        for member in results.keys():
+            if results[member] >= 0:
+                msg += bot.get_user(int(member)).name + " owes you " + str(results[member])
+            else:
+                msg += "\nYou owe " + bot.get_user(int(member)).name + " " + str(results[member])
+
+        await ctx.send("`"+msg+"`")
+
+    else:
+        await ctx.send("This command can be used only in `current_stats` channel")
 
 
 @bot.command()
 async def unverified(ctx):
     """Shows all the members unverified payments"""
-    results = await db_connector.get_unverified(user=ctx.message.author, guild_id=ctx.message.guild.id)
-    msg = ""
 
-    for result in results:
-        msg += result['message']+"\n"
+    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
+        results = await db_connector.get_unverified(user=ctx.message.author, guild_id=ctx.message.guild.id)
+        msg = ""
+        for result in results:
+            msg += result['message']+"\n"
 
-    await ctx.send(msg)
+        await ctx.send("`"+msg+"`")
+    else:
+        await ctx.send("This command can be used only in `current_stats` channel")
 
 
 @bot.command()
 async def transactions(ctx):
-    """Displays last 5 transaction made by the user"""
-    results = await db_connector.get_transactions(guild_id=ctx.message.guild.id, user=ctx.message.author)
-    msg = ""
+    """Displays last 10 transaction made by the user"""
 
-    for result in results:
-        msg += result['message'] + "\n"
+    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
+        results = await db_connector.get_transactions(guild_id=ctx.message.guild.id, user=ctx.message.author)
+        msg = ""
+        for result in results:
+            msg += result['message'] + "\n"
 
-    await ctx.send(msg)
+        await ctx.send("`"+msg+"`")
+    else:
+        await ctx.send("This command can be used only in `current_stats` channel")
 
 
 bot.run(os.getenv('TOKEN'))

@@ -78,14 +78,19 @@ class MongoDBConnector:
             final_message = message.author.name + " paid <" + raw_message + ">"
 
         doc = await collection.find_one({'id': user.id})
-        if len(doc['transactions']) >= 5:
+        if len(doc['transactions']) >= 10:
             await collection.update_one({'id': user.id}, {'$pop': {'transactions': -1}})
 
         await collection.update_one({'id': user.id}, {'$push': {'transactions': {"message": final_message}}})
 
     async def get_transactions(self, guild_id, user):
         """Returns transactions of a user from DB"""
-        s = await self.db[str(guild_id)].find_one({'id': user.id})
-        return s['transactions']
+        doc = await self.db[str(guild_id)].find_one({'id': user.id})
+        return doc['transactions']
+
+    async def get_data(self, guild_id, user):
+        """Returns current data of a user from DB"""
+        doc = await self.db[str(guild_id)].find_one({'id': user.id})
+        return doc['data']
 
 
