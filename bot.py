@@ -57,12 +57,9 @@ async def on_raw_reaction_add(payload):
 async def paid(ctx):
 
     if not is_DM(ctx.message.channel) and ctx.message.channel.name == "expenses":
-        # ADD message ID to db of the author of this command.
         message = ctx.message
         mentions = message.mentions
         await db_connector.pay(guild_id=message.guild.id, payee=message.author, paid_for=mentions, amount=get_amount(message), message=message)
-
-
 
 
 @bot.command()
@@ -77,9 +74,10 @@ async def unverified(ctx):
     """Shows all the members unverified payments"""
     results = await db_connector.get_unverified(user=ctx.message.author, guild_id=ctx.message.guild.id)
     msg = ""
-    print(results)
+
     for result in results:
         msg += result['message']+"\n"
+
     await ctx.send(msg)
 
 
