@@ -49,9 +49,12 @@ class MongoDBConnector:
             each_member_doc = await collection.find_one({'id': member.id})
             each_member_values = each_member_doc['data']
             if list(each_member_values.keys()).count(str(payee.id)) > 0:
-                each_member_values[str(payee.id)] = values[str(payee.id)] - amount
+                print(each_member_values[str(payee.id)])
+                each_member_values[str(payee.id)] = each_member_values[str(payee.id)] - amount
+                print("LOLWA")
             else:
-                each_member_values[str(member.id)] = -amount
+                each_member_values[str(payee.id)] = -amount
+                print("FUCK")
 
             await collection.update_one({'id': member.id}, {'$set': {'data': each_member_values}})
             await self.add_transaction(collection=collection, message=message, user=member, flag=False)
@@ -73,6 +76,10 @@ class MongoDBConnector:
             final_message = "You paid <" + raw_message + ">"
         else:
             final_message = message.author.name + " paid <" + raw_message + ">"
+
+        doc = await collection.find_one({'id': user.id})
+        if len(doc['transactions']) >= 5:
+            await collection.update_one({'id': user.id}, {'$pop': {'transactions': -1}})
 
         await collection.update_one({'id': user.id}, {'$push': {'transactions': {"message": final_message}}})
 
