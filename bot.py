@@ -44,6 +44,7 @@ async def on_guild_join(guild):
 
 @bot.event
 async def on_raw_reaction_add(payload):
+    """Verifies a payment"""
     channel = bot.get_channel(payload.channel_id)
     user = bot.get_user(payload.user_id)
     message = await channel.get_message(payload.message_id)

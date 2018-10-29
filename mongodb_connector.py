@@ -93,4 +93,8 @@ class MongoDBConnector:
         doc = await self.db[str(guild_id)].find_one({'id': user.id})
         return doc['data']
 
+    async def remove_verified(self, guild_id, user):
+        """Removes verified payments from DB"""
+        pass
+
 
