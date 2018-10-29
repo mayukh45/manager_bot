@@ -81,4 +81,12 @@ async def unverified(ctx):
     await ctx.send(msg)
 
 
+@bot.command()
+async def transactions(ctx):
+    """Displays last 5 transaction made by the user"""
+    results = await db_connector.get_transactions(guild_id=ctx.message.guild.id, user=ctx.message.author)
+    message = '\n'.join(results)
+    await ctx.send(message)
+
+
 bot.run(os.getenv('TOKEN'))

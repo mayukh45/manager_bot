@@ -54,17 +54,31 @@ class MongoDBConnector:
                 each_member_values[str(member.id)] = -amount
 
             await collection.update_one({'id': member.id}, {'$set': {'data': each_member_values}})
-            await self.add_transaction(collection=collection, message=message, user=member)
+            await self.add_transaction(collection=collection, message=message, user=member, flag=False)
 
         '''Adding payment in payee's collection'''
         await collection.update_one({'id': payee.id}, {'$set': {'data': values}})
-        await self.add_transaction(collection=collection, message=message, user=payee)
+        await self.add_transaction(collection=collection, message=message, user=payee, flag=True)
 
     async def get_unverified(self, user, guild_id):
-        """Returns the unverified messages of a user"""
+        """Returns the unverified messages of a user from DB"""
 
         s = await self.db[str(guild_id)].find_one({'id': user.id})
         return s['unverified']
 
-    async def add_transaction(self, collection, user, message):
-        await collection.update_one({'id': user.id}, {'$push': {'transactions': {"message": message.clean_content}}})
+    async def add_transaction(self, collection, user, message, flag):
+        """Adds a transaction detail to DB"""
+        raw_message = message.clean_content
+        if flag:
+            final_message = "You paid <" + raw_message + ">"
+        else:
+            final_message = message.author.name + " paid <" + raw_message + ">"
+
+        await collection.update_one({'id': user.id}, {'$push': {'transactions': {"message": final_message}}})
+
+    async def get_transactions(self, guild_id, user):
+        """Returns transactions of a user from DB"""
+        s = await self.db[str(guild_id)].find_one({'id': user.id})
+        return s['transactions']
+
+
