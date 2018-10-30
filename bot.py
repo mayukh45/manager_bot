@@ -49,8 +49,10 @@ async def on_raw_reaction_add(payload):
     user = bot.get_user(payload.user_id)
     message = await channel.get_message(payload.message_id)
     mentions = message.mentions
-    if not is_DM(channel) and channel.name == "expenses" and user in mentions and str(payload.emoji) == "👍🏽" and fine_paid_message(message):
+    print("i was here")
+    if not is_DM(channel) and channel.name == "expenses" and user in mentions and str(payload.emoji)[0] == "👍" and fine_paid_message(message):
         await db_connector.verify(paid_for=user, payee=message.author, amount=get_amount(message), guild_id=message.guild.id, message_id=message.id)
+        print("lol")
 
 
 @bot.command()
@@ -115,5 +117,5 @@ async def transactions(ctx):
     else:
         await ctx.send("This command can be used only in `current_stats` channel")
 
-
+print(len("👍🏽"))
 bot.run(os.getenv('TOKEN'))
