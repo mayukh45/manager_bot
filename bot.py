@@ -49,8 +49,8 @@ async def on_raw_reaction_add(payload):
     user = bot.get_user(payload.user_id)
     message = await channel.get_message(payload.message_id)
     mentions = message.mentions
-    if not is_DM(channel) and user in mentions and str(payload.emoji) == "👍🏽" and fine_paid_message(message):
-        pass
+    if not is_DM(channel) and channel.name == "expenses" and user in mentions and str(payload.emoji) == "👍🏽" and fine_paid_message(message):
+        await db_connector.verify(paid_for=user, payee=message.author, amount=get_amount(message), guild_id=message.guild.id, message_id=message.id)
 
 
 @bot.command()
