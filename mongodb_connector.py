@@ -72,8 +72,15 @@ class MongoDBConnector:
 
         """Decreasing value of left verifications from DB"""
         unverified = payee_doc['unverified']
-        unverified.pop()
-        print(unverified)
+        verify = (message_id == message['Mid'] for message in unverified)
+        for i in verify:
+            print(i)
+        if verify['left'] == 1:
+            unverified.remove(verify)
+        else:
+            verify['left'] -= 1
+
+        await collection.update_one({'id': payee.id}, {'$set': {'unverified': unverified}})
 
     async def get_unverified(self, user, guild_id):
         """Returns the unverified messages of a user from DB"""
