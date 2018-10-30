@@ -18,18 +18,12 @@ class MongoDBConnector:
 
         await self.db[str(guild_id)].drop()
 
-    async def add_user(self, user, collection):
-        """Adds user to DB"""
-
-        if await collection.find_one({'id': user.id}) is None:
-            await collection.insert_one({'id': user.id, 'name': user.name, 'data': [], 'transactions': [], 'unverified': []})
-
     async def add_users(self, users, collection):
         """Adds user to DB"""
 
         for user in users:
             if await collection.find_one({'id': user.id}) is None:
-                await collection.insert_one({'id': user.id, 'name': user.name, 'data': {}, 'transactions': []})
+                await collection.insert_one({'id': user.id, 'name': user.name, 'data': [], 'transactions': []})
 
     async def pay(self, guild_id, payee, paid_for, amount, message):
         """Handles required operations on DB after the paid command"""
@@ -72,6 +66,7 @@ class MongoDBConnector:
 
         """Decreasing value of left verifications from DB"""
         unverified = payee_doc['unverified']
+        verified = None
         for message in unverified:
             if message['Mid'] == message_id:
                 verified = message
@@ -86,8 +81,11 @@ class MongoDBConnector:
     async def get_unverified(self, user, guild_id):
         """Returns the unverified messages of a user from DB"""
 
-        s = await self.db[str(guild_id)].find_one({'id': user.id})
-        return s['unverified']
+        doc = await self.db[str(guild_id)].find_one({'id': user.id})
+        if doc is None or len(doc['unverified']) == 0:
+            return -1
+        else:
+            return doc['unverified']
 
     async def add_transaction(self, collection, user, message, flag):
         """Adds a transaction detail to DB"""
@@ -106,15 +104,19 @@ class MongoDBConnector:
     async def get_transactions(self, guild_id, user):
         """Returns transactions of a user from DB"""
         doc = await self.db[str(guild_id)].find_one({'id': user.id})
-        return doc['transactions']
+        if doc is None or len(doc['transactions']) == 0:
+            return -1
+        else:
+            return doc['transactions']
 
     async def get_data(self, guild_id, user):
         """Returns current data of a user from DB"""
         doc = await self.db[str(guild_id)].find_one({'id': user.id})
-        return doc['data']
+        if doc is None or len(doc['data']) == 0:
+            return -1
+        else:
+            return doc['data']
 
-    async def remove_verified(self, guild_id, user):
-        """Removes verified payments from DB"""
-        pass
+
 
 

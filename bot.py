@@ -75,6 +75,10 @@ async def stats(ctx):
 
     if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
         results = await db_connector.get_data(guild_id=ctx.message.guild.id, user=ctx.message.author)
+        if results == -1:
+            await ctx.send("`No stats to show`")
+            return
+
         msg = ""
         for member in results.keys():
             if results[member] >= 0:
@@ -94,6 +98,10 @@ async def unverified(ctx):
 
     if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
         results = await db_connector.get_unverified(user=ctx.message.author, guild_id=ctx.message.guild.id)
+        if results == -1:
+            await ctx.send("`No Unverified transactions`")
+            return
+
         msg = ""
         for result in results:
             msg += result['message']+"\n"
@@ -109,6 +117,10 @@ async def transactions(ctx):
 
     if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
         results = await db_connector.get_transactions(guild_id=ctx.message.guild.id, user=ctx.message.author)
+        if results == -1:
+            await ctx.send("`No transactions to show`")
+            return
+
         msg = ""
         for result in results:
             msg += result['message'] + "\n"
