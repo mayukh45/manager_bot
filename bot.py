@@ -125,7 +125,7 @@ async def stats(ctx):
             if results[member] >= 0:
                 msg += bot.get_user(int(member)).name + " owes you " + str(results[member])+"\n"
             else:
-                msg += "You owe " + bot.get_user(int(member)).name + " " + str(results[member])+"\n"
+                msg += "You owe " + bot.get_user(int(member)).name + " " + str(abs(results[member]))+"\n"
 
         await ctx.send("`"+msg+"`")
 
@@ -175,5 +175,5 @@ async def transactions(ctx):
 async def on_command_error(ctx, error):
     if type(error) is discord.ext.commands.errors.CommandNotFound:
         await ctx.send("`This command is not present, Use !help to see the available commands`")
-        
+
 bot.run(os.getenv('TOKEN'))
