@@ -89,6 +89,7 @@ async def paid(ctx):
                     await ctx.send("`You can't pay for yourself!`")
                     return
             mentions = remove_bots(mentions)
+            print(mentions)
             await db_connector.pay(guild_id=message.guild.id, payee=message.author, paid_for=mentions, amount=get_amount(message), message=message)
             await ctx.message.add_reaction("👍🏽")
 

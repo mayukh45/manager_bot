@@ -28,6 +28,8 @@ class MongoDBConnector:
     async def pay(self, guild_id, payee, paid_for, amount, message):
         """Handles required operations on DB after the paid command"""
 
+        if amount == 0 or len(paid_for) == 0:
+            return
         temp = [payee]
         collection = self.db[str(guild_id)]
         await self.add_users(users=paid_for + temp, collection=collection)
