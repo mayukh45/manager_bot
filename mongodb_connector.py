@@ -23,7 +23,7 @@ class MongoDBConnector:
 
         for user in users:
             if await collection.find_one({'id': user.id}) is None:
-                await collection.insert_one({'id': user.id, 'name': user.name, 'data': {}, 'transactions': []})
+                await collection.insert_one({'id': user.id, 'name': user.name, 'data': {}, 'transactions': [], 'unverified': []})
 
     async def pay(self, guild_id, payee, paid_for, amount, message):
         """Handles required operations on DB after the paid command"""
