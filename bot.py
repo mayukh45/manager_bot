@@ -1,3 +1,4 @@
+
 import asyncio
 import os
 import discord
@@ -21,14 +22,22 @@ def is_DM(channel):
 
 def get_amount(message):
     """Get the amount of money from a message"""
-    for tokens in message.content.split(" "):
-        if is_int(tokens):
-            return int(tokens)
+
+    allowed = "()[]{}+-*/^0123456789"
+    expression = []
+
+    for token in message.content:
+        if token in allowed:
+            expression.append(token)
+    return int(round(eval(''.join(expression))))
 
 
 def fine_paid_message(message):
     """Returns true if the format of paid message is fine"""
-    return (len(message.mentions) > 0 or message.mention_everyone) and get_amount(message) is not None and message.channel.name == "expenses" and message.content.split(" ")[0] == '!paid'
+    return (len(message.mentions) > 0 or message.mention_everyone) \
+           and get_amount(message) is not None \
+           and message.channel.name == "expenses" \
+           and message.content.split(" ")[0] == '!paid'
 
 
 def remove_bots(members):
