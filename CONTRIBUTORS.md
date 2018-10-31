@@ -1,4 +1,4 @@
-Saul contributors
+tour companion AKA Saul contributors
 ==============================
 
 * **[Sarthak Manna](https://github.com/sarthakmanna)**
