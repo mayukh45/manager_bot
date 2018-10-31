@@ -65,6 +65,7 @@ async def paid(ctx):
             message = ctx.message
             if message.mention_everyone:
                 mentions = ctx.message.guild.members
+                mentions.remove(message.author)
             else:
                 mentions = message.mentions
                 if mentions.count(ctx.message.guild.get_member(ctx.author.id)) > 0:
