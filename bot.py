@@ -27,7 +27,8 @@ def get_amount(message):
 
 
 def fine_paid_message(message):
-    return len(message.mentions) > 0 and get_amount(message) is not None and message.channel.name == "expenses" and message.content.split(" ")[0] == '!paid'
+    """Returns true if the format of paid message is fine"""
+    return (len(message.mentions) > 0 or message.mention_everyone) and get_amount(message) is not None and message.channel.name == "expenses" and message.content.split(" ")[0] == '!paid'
 
 
 @bot.event
@@ -54,7 +55,6 @@ async def on_raw_reaction_add(payload):
         await db_connector.verify(paid_for=user, payee=message.author, amount=get_amount(message), guild_id=message.guild.id, message_id=message.id)
 
 
-
 @bot.command()
 async def paid(ctx):
     """!paid <mentions> amount <description>"""
@@ -63,8 +63,17 @@ async def paid(ctx):
             await ctx.send("Use `!help paid` to see the format")
         else:
             message = ctx.message
-            mentions = message.mentions
+            if message.mention_everyone:
+                mentions = ctx.message.guild.members
+            else:
+                mentions = message.mentions
+                if mentions.count(ctx.message.guild.get_member(ctx.author.id)) > 0:
+                    await ctx.send("`You can't pay for yourself!`")
+                    return
+
             await db_connector.pay(guild_id=message.guild.id, payee=message.author, paid_for=mentions, amount=get_amount(message), message=message)
+            await ctx.message.add_reaction("👍🏽")
+
     else:
         await ctx.send("This command can be used only in `expenses` channel")
 
