@@ -5,7 +5,7 @@ Saul contributors
 
   * Added mathematical expression evaluation feature
 
-* **[Mayukh Sengupta](https://github.com/sarthakmanna)**
+* **[Mayukh Sengupta](https://github.com/mayukh45)**
 
   * Author
   * Added most of the features
