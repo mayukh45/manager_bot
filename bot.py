@@ -21,9 +21,16 @@ def is_DM(channel):
 
 def get_amount(message):
     """Get the amount of money from a message"""
-    for tokens in message.content.split(" "):
-        if is_int(tokens):
-            return int(tokens)
+    
+    allowed = "()[]{}+-*/^0123456789"
+    expression = []
+
+    for token in message.content:
+        if token in allowed:
+            if token == '^':
+                token = '**'
+            expression.append(token)
+    return int(round(eval(''.join(expression))))
 
 
 def fine_paid_message(message):
