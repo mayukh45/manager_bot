@@ -31,6 +31,17 @@ def fine_paid_message(message):
     return (len(message.mentions) > 0 or message.mention_everyone) and get_amount(message) is not None and message.channel.name == "expenses" and message.content.split(" ")[0] == '!paid'
 
 
+def remove_bots(members):
+    """Removes bots from a list of members"""
+    bots = []
+    for member in members:
+        if member.bot:
+            bots.append(member)
+    for bot in bots:
+        members.remove(bot)
+
+    return members
+
 @bot.event
 async def on_guild_remove(guild):
     """Will remove this guilds Data from DB"""
@@ -46,10 +57,16 @@ async def on_guild_join(guild):
 @bot.event
 async def on_raw_reaction_add(payload):
     """Verifies a payment"""
+    if payload.user_id == 505263369176219658: #Saul's ID
+        return
     channel = bot.get_channel(payload.channel_id)
     user = bot.get_user(payload.user_id)
+
     message = await channel.get_message(payload.message_id)
-    mentions = message.mentions
+    if message.mention_everyone:
+        mentions = remove_bots(message.guild.members)
+    else:
+        mentions = message.mentions
 
     if not is_DM(channel) and channel.name == "expenses" and user in mentions and str(payload.emoji)[0] == "👍" and fine_paid_message(message):
         await db_connector.verify(paid_for=user, payee=message.author, amount=get_amount(message), guild_id=message.guild.id, message_id=message.id)
@@ -71,7 +88,7 @@ async def paid(ctx):
                 if mentions.count(ctx.message.guild.get_member(ctx.author.id)) > 0:
                     await ctx.send("`You can't pay for yourself!`")
                     return
-
+            mentions = remove_bots(mentions)
             await db_connector.pay(guild_id=message.guild.id, payee=message.author, paid_for=mentions, amount=get_amount(message), message=message)
             await ctx.message.add_reaction("👍🏽")
 
@@ -92,9 +109,9 @@ async def stats(ctx):
         msg = ""
         for member in results.keys():
             if results[member] >= 0:
-                msg += bot.get_user(int(member)).name + " owes you " + str(results[member])
+                msg += bot.get_user(int(member)).name + " owes you " + str(results[member])+"\n"
             else:
-                msg += "\nYou owe " + bot.get_user(int(member)).name + " " + str(results[member])
+                msg += "You owe " + bot.get_user(int(member)).name + " " + str(results[member])+"\n"
 
         await ctx.send("`"+msg+"`")
 
