@@ -22,14 +22,18 @@ def is_DM(channel):
 def get_amount(message):
     """Get the amount of money from a message"""
     
-    allowed = "()[]{}+-*/^0123456789"
-    expression = []
+    allowed = "()[]{}+-*/^0123456789."
+    expression, hide = [], 0
 
     for token in message.content:
-        if token in allowed:
+        if token == '<':
+            hide += 1
+        if hide == 0 and token in allowed:
             if token == '^':
                 token = '**'
             expression.append(token)
+        if token == '>':
+            hide -= 1
     return int(round(eval(''.join(expression))))
 
 
