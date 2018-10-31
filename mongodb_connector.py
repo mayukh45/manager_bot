@@ -93,9 +93,9 @@ class MongoDBConnector:
         """Adds a transaction detail to DB"""
         raw_message = message.clean_content
         if flag:
-            final_message = "You paid <" + raw_message + ">"
+            final_message = "You paid < " + raw_message + " >"
         else:
-            final_message = message.author.name + " paid <" + raw_message + ">"
+            final_message = message.author.name + " paid < " + raw_message + " >"
 
         doc = await collection.find_one({'id': user.id})
         if len(doc['transactions']) >= 10:

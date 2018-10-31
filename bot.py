@@ -28,7 +28,7 @@ def get_amount(message):
 
 def fine_paid_message(message):
     """Returns true if the format of paid message is fine"""
-    return (len(message.mentions) > 0 or message.mention_everyone) and get_amount(message) is not None and message.channel.name == "expenses" and message.content.split(" ")[0] == '!paid'
+    return (len(message.mentions) > 0 or message.mention_everyone) and get_amount(message) is not None and message.channel.name == "expenses" and (message.content.split(" ")[0] == '!paid' or message.content.split(" ")[0] == '<@505263369176219658>')
 
 
 def remove_bots(members):
@@ -75,6 +75,8 @@ async def on_raw_reaction_add(payload):
 @bot.command()
 async def paid(ctx):
     """!paid <mentions> amount <description>"""
+    print(ctx.message.mentions)
+    print(ctx.message.content.split(" ")[0])
     if not is_DM(ctx.message.channel) and ctx.message.channel.name == "expenses":
         if not fine_paid_message(ctx.message):
             await ctx.send("Use `!help paid` to see the format")
