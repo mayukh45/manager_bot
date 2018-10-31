@@ -5,8 +5,8 @@
 
 ### `paid`
 Use this when you are paying for someone. The format is:
-!paid mentions(ie the members of the guild you are paying for) amount < description >
-
+!paid mentions(ie the members of the guild you are paying for) amount < description > ,
+You can also give `equations` in place of amount like !paid mentions 100/4 < desc > also works!
 ### `stats`
 This can be used to know your current stats, like how much you owe someone or someone else owes you!
 
