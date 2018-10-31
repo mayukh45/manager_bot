@@ -28,6 +28,8 @@ def get_amount(message):
 
     for token in message.content:
         if token in allowed:
+            if token == '^':
+                token = '**'
             expression.append(token)
     return int(round(eval(''.join(expression))))
 
