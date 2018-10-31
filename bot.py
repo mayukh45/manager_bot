@@ -171,4 +171,9 @@ async def transactions(ctx):
         await ctx.send("This command can be used only in `current_stats` channel")
 
 
+@bot.event
+async def on_command_error(ctx, error):
+    if type(error) is discord.ext.commands.errors.CommandNotFound:
+        await ctx.send("`This command is not present, Use !help to see the available commands`")
+        
 bot.run(os.getenv('TOKEN'))
