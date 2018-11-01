@@ -92,6 +92,7 @@ class MongoDBConnector:
     async def add_transaction(self, collection, user, message, flag):
         """Adds a transaction detail to DB"""
         raw_message = message.clean_content
+        raw_message = raw_message[raw_message.index(" "):]
         if flag:
             final_message = "You paid < " + raw_message + " >"
         else:
