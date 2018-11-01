@@ -1,5 +1,6 @@
 import discord
 
+
 def is_int(val):
     try:
         a = int(val)
@@ -28,7 +29,10 @@ def get_amount(message):
             expression.append(token)
         if token == '>':
             hide -= 1
-    return int(round(eval(''.join(expression))))
+    if len(expression) == 0:
+        return None
+    else:
+        return int(round(eval(''.join(expression))))
 
 
 def fine_paid_message(message):
