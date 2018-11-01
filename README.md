@@ -19,4 +19,7 @@ This shows your last 10 transactions.
 So invite this bot and get going!
 
 ##### Bug Report
-Please report bugs at `mayukh1110@gmail.com` or create an issue.
+Please report bugs at [mayukh1110@gmail.com](mayukh1110@gmail.com)` or create an issue.
+
+
+###### `Since its the first version released, its hosted on heroku and the bot may come offline once in a while but no worries! You won't loose your data.`
