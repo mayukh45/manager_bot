@@ -50,7 +50,7 @@ async def paid(ctx):
 
     if not is_DM(ctx.message.channel) and ctx.message.channel.name == "expenses":
         if not fine_paid_message(ctx.message):
-            await ctx.send("Use `!help paid` to see the format")
+            await ctx.send("```Use !help paid to see the format```")
         else:
             message = ctx.message
             if message.mention_everyone:
@@ -59,14 +59,14 @@ async def paid(ctx):
             else:
                 mentions = message.mentions
                 if mentions.count(ctx.message.guild.get_member(ctx.author.id)) > 0:
-                    await ctx.send("`You can't pay for yourself!`")
+                    await ctx.send("```You can't pay for yourself!```")
                     return
             mentions = remove_bots(mentions)
             await db_connector.pay(guild_id=message.guild.id, payee=message.author, paid_for=mentions, amount=get_amount(message), message=message)
             await ctx.message.add_reaction("👍🏽")
 
     else:
-        await ctx.send("This command can be used only in `expenses` channel")
+        await ctx.send("```This command can be used only in expenses channel```")
 
 
 @bot.command()
@@ -76,7 +76,7 @@ async def stats(ctx):
     if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
         results = await db_connector.get_data(guild_id=ctx.message.guild.id, user=ctx.message.author)
         if results == -1:
-            await ctx.send("`No stats to show`")
+            await ctx.send("```No stats to show```")
             return
 
         msg = ""
@@ -86,10 +86,10 @@ async def stats(ctx):
             else:
                 msg += "You owe " + bot.get_user(int(member)).name + " " + str(abs(results[member]))+"\n"
 
-        await ctx.send("`"+msg+"`")
+        await ctx.send("```"+msg+"```")
 
     else:
-        await ctx.send("This command can be used only in `current_stats` channel")
+        await ctx.send("```This command can be used only in current_stats channel```")
 
 
 @bot.command()
@@ -99,16 +99,16 @@ async def unverified(ctx):
     if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
         results = await db_connector.get_unverified(user=ctx.message.author, guild_id=ctx.message.guild.id)
         if results == -1:
-            await ctx.send("`No Unverified transactions`")
+            await ctx.send("```No Unverified transactions```")
             return
 
         msg = ""
         for result in results:
             msg += result['message']+"\n"
 
-        await ctx.send("`"+msg+"`")
+        await ctx.send("```"+msg+"```")
     else:
-        await ctx.send("This command can be used only in `current_stats` channel")
+        await ctx.send("```This command can be used only in current_stats channel```")
 
 
 @bot.command()
@@ -118,21 +118,22 @@ async def transactions(ctx):
     if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
         results = await db_connector.get_transactions(guild_id=ctx.message.guild.id, user=ctx.message.author)
         if results == -1:
-            await ctx.send("`No transactions to show`")
+            await ctx.send("```No transactions to show```")
             return
 
         msg = ""
         for result in results:
             msg += result['message'] + "\n"
 
-        await ctx.send("`"+msg+"`")
+        await ctx.send("```"+msg+"```")
     else:
-        await ctx.send("This command can be used only in `current_stats` channel")
+        await ctx.send("```This command can be used only in current_stats channel```")
 
 
 @bot.event
 async def on_command_error(ctx, error):
+    embed = discord.Embed(title="Command not found!", description="Either Use !help or [click here](https://github.com/mayukh45/manager_bot/blob/master/README.md) to see the available commands")
     if type(error) is discord.ext.commands.errors.CommandNotFound:
-        await ctx.send("`This command is not present, Use !help to see the available commands`")
+        await ctx.send(embed=embed)
 
 bot.run(os.getenv('TOKEN'))
