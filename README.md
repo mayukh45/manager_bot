@@ -22,4 +22,4 @@ So invite this bot and get going!
 Please report bugs at [mayukh1110@gmail.com](mayukh1110@gmail.com)` or create an issue.
 
 
-###### `Since its the first version released, its hosted on heroku and the bot may come offline once in a while but no worries! You won't loose your data.`
+###### `Since its the first version released, its hosted on heroku and the bot may come offline once in a while but no worries! You won't lose your data.`
