@@ -1,5 +1,7 @@
 # tour_companion
 #### Going on a tour,  want to manage your expenses with your friends? Just take this discord bot with you! Just make a guild with your tour mates and make two channels `expenses` and `current_stats` and Saul will handle all the expenses!
+#### To invite the bot [click here](https://discordapp.com/oauth2/authorize?client_id=505263369176219658&scope=bot&permissions=8)
+ 
 ## How to Use (Commands):
 #### Either use the command prefix (!) or mention the bot before using the commands 
 
