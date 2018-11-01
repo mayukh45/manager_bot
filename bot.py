@@ -4,7 +4,7 @@ import discord
 from discord.ext.commands import Bot
 from discord.ext import commands
 from mongodb_connector import MongoDBConnector
-from checks import is_int
+from checks import get_amount, is_DM, fine_paid_message, remove_bots
 
 desc = 'A bot made by Mayukh to manage expenses, Interact with the bot only in the expenses channel'
 
@@ -13,45 +13,6 @@ loop = asyncio.get_event_loop()
 db_connector = MongoDBConnector(os.getenv('MONGODB_SRV'), db_name='manager_db', loop=loop)
 bot = Bot(command_prefix=commands.when_mentioned_or("!"), description=desc, loop=loop)
 
-
-def is_DM(channel):
-    """Returns True if the expenses channel is a DM channel"""
-    return type(channel) is discord.channel.DMChannel
-
-
-def get_amount(message):
-    """Get the amount of money from a message"""
-    
-    allowed = "()[]{}+-*/^0123456789."
-    expression, hide = [], 0
-
-    for token in message.content:
-        if token == '<':
-            hide += 1
-        if hide == 0 and token in allowed:
-            if token == '^':
-                token = '**'
-            expression.append(token)
-        if token == '>':
-            hide -= 1
-    return int(round(eval(''.join(expression))))
-
-
-def fine_paid_message(message):
-    """Returns true if the format of paid message is fine"""
-    return (len(message.mentions) > 0 or message.mention_everyone) and get_amount(message) is not None and message.channel.name == "expenses" and (message.content.split(" ")[0] == '!paid' or message.content.split(" ")[0] == '<@505263369176219658>')
-
-
-def remove_bots(members):
-    """Removes bots from a list of members"""
-    bots = []
-    for member in members:
-        if member.bot:
-            bots.append(member)
-    for bot in bots:
-        members.remove(bot)
-
-    return members
 
 @bot.event
 async def on_guild_remove(guild):
@@ -86,8 +47,7 @@ async def on_raw_reaction_add(payload):
 @bot.command()
 async def paid(ctx):
     """!paid <mentions> amount <description>"""
-    print(ctx.message.mentions)
-    print(ctx.message.content.split(" ")[0])
+
     if not is_DM(ctx.message.channel) and ctx.message.channel.name == "expenses":
         if not fine_paid_message(ctx.message):
             await ctx.send("Use `!help paid` to see the format")
@@ -102,7 +62,6 @@ async def paid(ctx):
                     await ctx.send("`You can't pay for yourself!`")
                     return
             mentions = remove_bots(mentions)
-            print(mentions)
             await db_connector.pay(guild_id=message.guild.id, payee=message.author, paid_for=mentions, amount=get_amount(message), message=message)
             await ctx.message.add_reaction("👍🏽")
 
