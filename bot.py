@@ -152,12 +152,32 @@ async def transactions(ctx):
 
 @bot.command()
 async def help(ctx):
-    await ctx.send('lol')
+    msg = "`@mention me or use ! before my supported commands`"
+    embed = discord.Embed(title="Supported Commands")
+
+    embed.add_field(name='paid', value='Use this when you are paying for someone. '
+                                       'The format is: `!paid mentions(ie the members '
+                                       'of the guild you are paying for) amount < description >` , '
+                                       'You can also give equations in place of amount like '
+                                       '!paid mentions 100/4 < desc > also works! \n'
+                                       ' `Example` ```!paid @Jack 500```')
+    embed.add_field(name='unverified', value='This shows a list of your unverified payments, '
+                                             'A payment (ie made using the paid command)'
+                                             ' is verified only if the members you paid for thumbs up your message.')
+    embed.add_field(name='stats', value='This can be used to know your current stats, '
+                                        'like how much you owe someone or someone else owes you!')
+    embed.add_field(name='transactions', value='This shows your last 10 transactions.')
+    embed.add_field(name='unapproved', value="This shows the payments you did not approve yet, One needs "
+                                             "to approve payments (made by `paid` command) by thumbing up the payments "
+                                             "in which he/she is mentioned")
+    await ctx.send(msg, embed=embed)
 
 
 @bot.event
 async def on_command_error(ctx, error):
-    embed = discord.Embed(title="Command not found!", description="Either Use !help or [click here](https://github.com/mayukh45/manager_bot/blob/master/README.md) to see the available commands")
+    embed = discord.Embed(title="Command not found!", description="Either Use !help or "
+                                                                  "[click here](https://github.com/mayukh45/manager_bot/blob/master/README.md) "
+                                                                  "to see the available commands")
 
     if type(error) is discord.ext.commands.errors.CommandNotFound:
         await ctx.send(embed=embed)
