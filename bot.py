@@ -12,6 +12,7 @@ db_name = 'manager_db'
 loop = asyncio.get_event_loop()
 db_connector = MongoDBConnector(os.getenv('MONGODB_SRV'), db_name='manager_db', loop=loop)
 bot = Bot(command_prefix=commands.when_mentioned_or("!"), description=desc, loop=loop)
+bot.remove_command('help')
 
 
 @bot.event
@@ -112,6 +113,25 @@ async def unverified(ctx):
 
 
 @bot.command()
+async def unapproved(ctx):
+    """Shows all the members unverified payments"""
+
+    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
+        results = await db_connector.get_unapproved(user=ctx.message.author, guild_id=ctx.message.guild.id)
+        if results == -1:
+            await ctx.send("```No Unapproved transactions```")
+            return
+
+        msg = ""
+        for result in results:
+            msg += result['message']+"\n"
+
+        await ctx.send("```"+msg+"```")
+    else:
+        await ctx.send("```This command can be used only in current_stats channel```")
+
+
+@bot.command()
 async def transactions(ctx):
     """Displays last 10 transaction made by the user"""
 
@@ -130,10 +150,23 @@ async def transactions(ctx):
         await ctx.send("```This command can be used only in current_stats channel```")
 
 
+@bot.command()
+async def help(ctx):
+    await ctx.send('lol')
+
+
 @bot.event
 async def on_command_error(ctx, error):
     embed = discord.Embed(title="Command not found!", description="Either Use !help or [click here](https://github.com/mayukh45/manager_bot/blob/master/README.md) to see the available commands")
+
     if type(error) is discord.ext.commands.errors.CommandNotFound:
         await ctx.send(embed=embed)
+
+
+@bot.event
+async def on_ready():
+    game = discord.Game(name="Money laundering")
+    await bot.change_presence(status=discord.Status.online, activity=game)
+
 
 bot.run(os.getenv('TOKEN'))

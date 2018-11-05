@@ -23,7 +23,7 @@ class MongoDBConnector:
 
         for user in users:
             if await collection.find_one({'id': user.id}) is None:
-                await collection.insert_one({'id': user.id, 'name': user.name, 'data': {}, 'transactions': [], 'unverified': []})
+                await collection.insert_one({'id': user.id, 'name': user.name, 'data': {}, 'transactions': [], 'unverified': [], 'unapproved': []})
 
     async def pay(self, guild_id, payee, paid_for, amount, message):
         """Handles required operations on DB after the paid command"""
@@ -37,6 +37,7 @@ class MongoDBConnector:
 
         '''Adding transaction in paid_for members collection'''
         for member in paid_for:
+            await collection.update_one({'id': member.id}, {'$push': {'unapproved': {"Mid": message.id, "message": message.clean_content, "left": len(paid_for)}}})
             await self.add_transaction(collection=collection, message=message, user=member, flag=False)
 
         '''Adding transaction in payee's collection'''
@@ -46,16 +47,21 @@ class MongoDBConnector:
         """Adds a payment to DB"""
 
         collection = self.db[str(guild_id)]
+
         payee_doc = await collection.find_one({'id': payee.id})
+        paid_for_doc = await collection.find_one({'id': paid_for.id})
         values = payee_doc['data']
+        paid_for_values = paid_for_doc['data']
+        if not self.unapproved(paid_for_doc, message_id):
+            return
+
         if list(values.keys()).count(str(paid_for.id)) > 0:
             values[str(paid_for.id)] = values[str(paid_for.id)] + amount
         else:
             values[str(paid_for.id)] = amount
 
         '''Adding payment in paid_for's collection'''
-        paid_for_doc = await collection.find_one({'id': paid_for.id})
-        paid_for_values = paid_for_doc['data']
+
         if list(paid_for_values.keys()).count(str(payee.id)) > 0:
             paid_for_values[str(payee.id)] = paid_for_values[str(payee.id)] - amount
         else:
@@ -79,6 +85,17 @@ class MongoDBConnector:
             verified['left'] -= 1
 
         await collection.update_one({'id': payee.id}, {'$set': {'unverified': unverified}})
+
+        """Removing unapproved from paid_for's DB"""
+        unapproved = paid_for_doc['unapproved']
+        approved = None
+        for message in unapproved:
+            if message['Mid'] == message_id:
+                approved = message
+                break
+
+        unapproved.remove(approved)
+        await collection.update_one({'id': paid_for.id}, {'$set': {'unapproved': unapproved}})
 
     async def get_unverified(self, user, guild_id):
         """Returns the unverified messages of a user from DB"""
@@ -119,6 +136,23 @@ class MongoDBConnector:
             return -1
         else:
             return doc['data']
+
+    def unapproved(self, paid_for_doc, message_id):
+        """Returns the unverified transactions of the user """
+        unapproved = paid_for_doc['unapproved']
+        for message in unapproved:
+            if message['Mid'] == message_id:
+                return True
+
+        return False
+
+    async def get_unapproved(self, guild_id, user):
+        """Returns unapproved transactions of a user from DB"""
+        doc = await self.db[str(guild_id)].find_one({'id': user.id})
+        if doc is None or len(doc['unapproved']) == 0:
+            return -1
+        else:
+            return doc['unapproved']
 
 
 
