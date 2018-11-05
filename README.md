@@ -5,6 +5,9 @@
 ## How to Use (Commands):
 #### Either use the command prefix (!) or mention the bot before using the commands 
 
+### `help`
+Shows the features of the bot.
+
 ### `paid`
 Use this when you are paying for someone. The format is:
 !paid mentions(ie the members of the guild you are paying for) amount < description > ,
@@ -17,6 +20,9 @@ This shows a list of your unverified payments, A payment (ie made using the `pai
 
 ### `transactions`
 This shows your last 10 transactions.
+
+### `unapproved`
+This shows the payments you did not approve yet, One needs to approve payments (made by `paid` command) by thumbing up the payments in which he/she is mentioned
 
 So invite this bot and get going!
 
