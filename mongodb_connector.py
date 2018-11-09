@@ -23,7 +23,9 @@ class MongoDBConnector:
 
         for user in users:
             if await collection.find_one({'id': user.id}) is None:
-                await collection.insert_one({'id': user.id, 'name': user.name, 'data': {}, 'transactions': [], 'unverified': [], 'unapproved': []})
+                await collection.insert_one({'id': user.id, 'name': user.name,
+                                             'data': {}, 'transactions': [], 'unverified': [],
+                                             'unapproved': []})
 
     async def pay(self, guild_id, payee, paid_for, amount, message):
         """Handles required operations on DB after the paid command"""
@@ -153,6 +155,26 @@ class MongoDBConnector:
             return -1
         else:
             return doc['unapproved']
+
+    async def add_self(self, guild_id, user, amount, message):
+        """Adds the amount on your own expenditure"""
+        collection = self.db[str(guild_id)]
+        users = [user]
+        await self.add_users(users=users, collection=collection)
+        doc = await collection.find_one({'id': user.id})
+        values = doc['data']
+        print(values)
+        self_amount = 0
+
+        if list(values.keys()).count(str(user.id)) > 0:
+            self_amount = values[str(user.id)]
+        values[str(user.id)] = self_amount + amount
+        print(values)
+        await collection.update_one({'id': user.id}, {'$set': {'data': values}})
+        print('wtf')
+        await self.add_transaction(collection=collection, message=message, user=user, flag=True)
+
+
 
 
 
