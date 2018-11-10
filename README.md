@@ -25,7 +25,7 @@ This shows your last 10 transactions.
 This shows the payments you did not approve yet, One needs to approve payments (made by `paid` command) by thumbing up the payments in which he/she is mentioned
 
 ### `self`
-This helps to keep track of your own expenses, Want to manage your budget?, Then tell Saul about your personal expenses in DM through this command.
+This helps to keep track of your own expenses, Want to manage your budget? Then DM Saul about your personal expenses using this command. Example `!self 500 for pizza!`
 
 ### `data`
 DM Saul data and he will show your personal transaction along with your total expenses you have added using ```self``` command.
