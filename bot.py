@@ -183,7 +183,7 @@ async def help(ctx):
     embed.add_field(name='self', value="This helps to keep track of your own expenses, Want to manage your"
                                        " budget? Then tell Saul about your personal expenses in DM through this "
                                        "command.\n `Example` ```!self 500 for pizza!```")
-    embed.add_field(name='data', value='DM Saul "data" and he will show your personal transactions'
+    embed.add_field(name='data', value='DM Saul "data" and he will show your personal transactions '
                                        'along with your total expenses you have added using `self` command')
     await ctx.send(msg, embed=embed)
 
