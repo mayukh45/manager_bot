@@ -180,17 +180,33 @@ async def help(ctx):
     embed.add_field(name='unapproved', value="This shows the payments you did not approve yet, One needs "
                                              "to approve payments (made by `paid` command) by thumbing up the payments "
                                              "in which he/she is mentioned")
+    embed.add_field(name='self', value="This helps to keep track of your own expenses, Want to manage your"
+                                       " budget?, Then tell Saul about your personal expenses in DM through this "
+                                       "command.")
+    embed.add_field(name='data', value='DM Saul data and he will show your personal transactions'
+                                       'along with your total expenses you have added using ```self``` command')
     await ctx.send(msg, embed=embed)
 
 
 @bot.command()
 async def self(ctx):
-    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "expenses":
+    await db_connector.add_self(message=ctx.message,
+                                user=ctx.message.author, amount=get_amount(ctx.message))
+    await ctx.send('Okay')
 
-        await db_connector.add_self(guild_id=ctx.message.guild.id, message=ctx.message,
-                                    user=ctx.message.author, amount=get_amount(ctx.message))
-    else:
-        await ctx.send("```This command can be used only in expenses channel```")
+
+@bot.command()
+async def data(ctx):
+    all_data = await db_connector.get_personal_data(user=ctx.message.author)
+    if all_data == -1:
+        await ctx.send("```No personal expenses to show```")
+        return
+    msg = ""
+    for personal_data in all_data[0]:
+        msg += personal_data + "\n"
+
+    msg += 'Your expenses till date amounts to {0}'.format(all_data[1])
+    await ctx.send('```'+msg+'```')
 
 
 @bot.event
