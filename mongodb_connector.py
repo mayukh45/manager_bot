@@ -168,7 +168,7 @@ class MongoDBConnector:
             if len(doc['personal_exp']) >= 20:
                 await collection.update_one({'id': user.id}, {'$pop': {'personal_exp': -1}})
 
-            await collection.update_one({'id': user.id}, {'$push': {'personal_exp': message.content}})
+            await collection.update_one({'id': user.id}, {'$push': {'personal_exp': message.content[5:]}})
 
     async def get_personal_data(self, user):
         collection = self.db['personal_data']

@@ -32,10 +32,11 @@ async def on_raw_reaction_add(payload):
     """Verifies a payment"""
     if payload.user_id == 505263369176219658: #Saul's ID
         return
-    channel = bot.get_channel(payload.channel_id)
-    user = bot.get_user(payload.user_id)
 
+    channel = bot.get_channel(payload.channel_id) # expenses channel
+    user = bot.get_user(payload.user_id)
     message = await channel.get_message(payload.message_id)
+
     author_id = message.author.id
 
     if message.mention_everyone:
@@ -43,13 +44,19 @@ async def on_raw_reaction_add(payload):
     else:
         mentions = message.mentions
 
-    if not is_DM(channel) and channel.name == "expenses" and user in mentions and str(payload.emoji)[0] == "👍" and fine_paid_message(message) :
+    if not is_DM(channel) and channel.name == "expenses" and \
+            user in mentions and str(payload.emoji)[0] == "👍" and fine_paid_message(message) :
         if author_id != 505263369176219658:
-            await db_connector.verify(paid_for=user, payee=message.author, amount=get_amount(message), guild_id=message.guild.id, message_id=message.id)
+            await db_connector.verify(paid_for=user, payee=message.author,
+                                      amount=get_amount(message), guild_id=message.guild.id, message_id=message.id)
         else:
             print(message.content[3:11])
             if message.content[3:11] == "Payments":
-                pass
+                unapproved_data = await db_connector.get_unapproved(guild_id=message.guild.id, user=message.author)
+                for message_data in unapproved_data:
+                    message = await channel.get_message(message_data['Mid'])
+                    await db_connector.verify(payee=message.author, paid_for=user, amount=get_amount(message),
+                                              guild_id=message.guild.id, message_id=message_data['Mid'])
 
 
 @bot.command()
@@ -126,7 +133,7 @@ async def unverified(ctx):
 async def unapproved(ctx):
     """Shows all the members unverified payments"""
 
-    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
+    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "expenses":
         results = await db_connector.get_unapproved(user=ctx.message.author, guild_id=ctx.message.guild.id)
         if results == -1:
             await ctx.send("```No Unapproved transactions```")
