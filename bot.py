@@ -44,15 +44,15 @@ async def on_raw_reaction_add(payload):
     else:
         mentions = message.mentions
 
-    if not is_DM(channel) and channel.name == "expenses" and \
-            user in mentions and str(payload.emoji)[0] == "👍" and fine_paid_message(message) :
-        if author_id != 505263369176219658:
+    if not is_DM(channel) and channel.name == "expenses" and str(payload.emoji)[0] == "👍":
+        if author_id != 505263369176219658 and user in mentions and fine_paid_message(message):
+
             await db_connector.verify(paid_for=user, payee=message.author,
                                       amount=get_amount(message), guild_id=message.guild.id, message_id=message.id)
-        else:
-            print(message.content[3:11])
+        elif author_id == 505263369176219658:
+
             if message.content[3:11] == "Payments":
-                unapproved_data = await db_connector.get_unapproved(guild_id=message.guild.id, user=message.author)
+                unapproved_data = await db_connector.get_unapproved(guild_id=message.guild.id, user=user)
                 for message_data in unapproved_data:
                     message = await channel.get_message(message_data['Mid'])
                     await db_connector.verify(payee=message.author, paid_for=user, amount=get_amount(message),
@@ -145,7 +145,7 @@ async def unapproved(ctx):
 
         await ctx.send("```"+msg+"```")
     else:
-        await ctx.send("```This command can be used only in current_stats channel```")
+        await ctx.send("```This command can be used only in expenses channel```")
 
 
 @bot.command()
