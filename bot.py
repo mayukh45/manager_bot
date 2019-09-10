@@ -63,7 +63,7 @@ async def on_raw_reaction_add(payload):
 async def paid(ctx):
     """!paid <mentions> amount <description>"""
 
-    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "expenses":
+    if not is_DM(ctx.message.channel) and (ctx.message.channel.name == "expenses" or ctx.message.channel.name == "bot"):
         if not fine_paid_message(ctx.message):
             await ctx.send("```Use !help paid to see the format```")
         else:
@@ -88,7 +88,7 @@ async def paid(ctx):
 async def stats(ctx):
     """Shows the current stats of a member regarding his/her expenses"""
 
-    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
+    if not is_DM(ctx.message.channel) and (ctx.message.channel.name == "current_stats" or ctx.message.channel.name == "bot"):
         results = await db_connector.get_data(guild_id=ctx.message.guild.id, user=ctx.message.author)
         if results == -1:
             await ctx.send("```No stats to show```")
@@ -114,7 +114,7 @@ async def stats(ctx):
 async def unverified(ctx):
     """Shows all the members unverified payments"""
 
-    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
+    if not is_DM(ctx.message.channel) and (ctx.message.channel.name == "current_stats" or ctx.message.channel.name == "bot"):
         results = await db_connector.get_unverified(user=ctx.message.author, guild_id=ctx.message.guild.id)
         if results == -1:
             await ctx.send("```No Unverified transactions```")
@@ -133,7 +133,7 @@ async def unverified(ctx):
 async def unapproved(ctx):
     """Shows all the members unverified payments"""
 
-    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "expenses":
+    if not is_DM(ctx.message.channel) and (ctx.message.channel.name == "expenses" or ctx.message.channel.name == "bot"):
         results = await db_connector.get_unapproved(user=ctx.message.author, guild_id=ctx.message.guild.id)
         if results == -1:
             await ctx.send("```No Unapproved transactions```")
@@ -152,7 +152,7 @@ async def unapproved(ctx):
 async def transactions(ctx):
     """Displays last 10 transaction made by the user"""
 
-    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
+    if not is_DM(ctx.message.channel) and (ctx.message.channel.name == "current_stats" or ctx.message.channel.name == "bot"):
         results = await db_connector.get_transactions(guild_id=ctx.message.guild.id, user=ctx.message.author)
         if results == -1:
             await ctx.send("```No transactions to show```")
@@ -169,7 +169,7 @@ async def transactions(ctx):
 
 @bot.command()
 async def help(ctx):
-    msg = "`@mention me or use ! before my supported commands`"
+    msg = "`@mention me or use $ before my supported commands`"
     embed = discord.Embed(title="Supported Commands")
 
     embed.add_field(name='paid', value='Use this when you are paying for someone. '
