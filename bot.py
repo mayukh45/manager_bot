@@ -65,7 +65,7 @@ async def paid(ctx):
 
     if not is_DM(ctx.message.channel) and (ctx.message.channel.name == "expenses" or ctx.message.channel.name == "bot"):
         if not fine_paid_message(ctx.message):
-            await ctx.send("```Use !help paid to see the format```")
+            await ctx.send("```Use $help paid to see the format```")
         else:
             message = ctx.message
             if message.mention_everyone:
@@ -177,7 +177,7 @@ async def help(ctx):
                                        'of the guild you are paying for) amount < description >` , '
                                        'You can also give equations in place of amount like '
                                        '!paid mentions 100/4 < desc > also works! \n'
-                                       ' `Example` ```!paid @Jack 500```')
+                                       ' `Example` ```$paid @Jack 500```')
     embed.add_field(name='unverified', value='This shows a list of your unverified payments, '
                                              'A payment (ie made using the paid command)'
                                              ' is verified only if the members you paid for thumbs up your message.')
@@ -189,7 +189,7 @@ async def help(ctx):
                                              "in which he/she is mentioned")
     embed.add_field(name='self', value="This helps to keep track of your own expenses, Want to manage your"
                                        " budget? Then tell Saul about your personal expenses in DM through this "
-                                       "command.\n `Example` ```!self 500 for pizza!```")
+                                       "command.\n `Example` ```$self 500 for pizza!```")
     embed.add_field(name='data', value='DM Saul "data" and he will show your personal transactions '
                                        'along with your total expenses you have added using `self` command')
     await ctx.send(msg, embed=embed)
