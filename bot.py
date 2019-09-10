@@ -11,7 +11,7 @@ desc = 'A bot made by Mayukh to manage expenses, Interact with the bot only in t
 db_name = 'manager_db'
 loop = asyncio.get_event_loop()
 db_connector = MongoDBConnector(os.getenv('MONGODB_SRV'), db_name='manager_db', loop=loop)
-bot = Bot(command_prefix=commands.when_mentioned_or("!"), description=desc, loop=loop)
+bot = Bot(command_prefix=commands.when_mentioned_or("$"), description=desc, loop=loop)
 bot.remove_command('help')
 
 
