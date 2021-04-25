@@ -4,54 +4,16 @@ import discord
 from discord.ext.commands import Bot
 from discord.ext import commands
 from mongodb_connector import MongoDBConnector
-from checks import is_int
+from checks import get_amount, is_DM, fine_paid_message, remove_bots
 
 desc = 'A bot made by Mayukh to manage expenses, Interact with the bot only in the expenses channel'
 
 db_name = 'manager_db'
 loop = asyncio.get_event_loop()
 db_connector = MongoDBConnector(os.getenv('MONGODB_SRV'), db_name='manager_db', loop=loop)
-bot = Bot(command_prefix=commands.when_mentioned_or("!"), description=desc, loop=loop)
+bot = Bot(command_prefix=commands.when_mentioned_or("$"), description=desc, loop=loop)
+bot.remove_command('help')
 
-
-def is_DM(channel):
-    """Returns True if the expenses channel is a DM channel"""
-    return type(channel) is discord.channel.DMChannel
-
-
-def get_amount(message):
-    """Get the amount of money from a message"""
-    
-    allowed = "()[]{}+-*/^0123456789."
-    expression, hide = [], 0
-
-    for token in message.content:
-        if token == '<':
-            hide += 1
-        if hide == 0 and token in allowed:
-            if token == '^':
-                token = '**'
-            expression.append(token)
-        if token == '>':
-            hide -= 1
-    return int(round(eval(''.join(expression))))
-
-
-def fine_paid_message(message):
-    """Returns true if the format of paid message is fine"""
-    return (len(message.mentions) > 0 or message.mention_everyone) and get_amount(message) is not None and message.channel.name == "expenses" and (message.content.split(" ")[0] == '!paid' or message.content.split(" ")[0] == '<@505263369176219658>')
-
-
-def remove_bots(members):
-    """Removes bots from a list of members"""
-    bots = []
-    for member in members:
-        if member.bot:
-            bots.append(member)
-    for bot in bots:
-        members.remove(bot)
-
-    return members
 
 @bot.event
 async def on_guild_remove(guild):
@@ -70,27 +32,40 @@ async def on_raw_reaction_add(payload):
     """Verifies a payment"""
     if payload.user_id == 505263369176219658: #Saul's ID
         return
-    channel = bot.get_channel(payload.channel_id)
-    user = bot.get_user(payload.user_id)
 
+    channel = bot.get_channel(payload.channel_id) # expenses channel
+    user = bot.get_user(payload.user_id)
     message = await channel.get_message(payload.message_id)
+
+    author_id = message.author.id
+
     if message.mention_everyone:
         mentions = remove_bots(message.guild.members)
     else:
         mentions = message.mentions
 
-    if not is_DM(channel) and channel.name == "expenses" and user in mentions and str(payload.emoji)[0] == "👍" and fine_paid_message(message):
-        await db_connector.verify(paid_for=user, payee=message.author, amount=get_amount(message), guild_id=message.guild.id, message_id=message.id)
+    if not is_DM(channel) and channel.name == "expenses" and str(payload.emoji)[0] == "👍":
+        if author_id != 505263369176219658 and user in mentions and fine_paid_message(message):
+
+            await db_connector.verify(paid_for=user, payee=message.author,
+                                      amount=get_amount(message), guild_id=message.guild.id, message_id=message.id)
+        elif author_id == 505263369176219658:
+
+            if message.content[3:11] == "Payments":
+                unapproved_data = await db_connector.get_unapproved(guild_id=message.guild.id, user=user)
+                for message_data in unapproved_data:
+                    message = await channel.get_message(message_data['Mid'])
+                    await db_connector.verify(payee=message.author, paid_for=user, amount=get_amount(message),
+                                              guild_id=message.guild.id, message_id=message_data['Mid'])
 
 
 @bot.command()
 async def paid(ctx):
     """!paid <mentions> amount <description>"""
-    print(ctx.message.mentions)
-    print(ctx.message.content.split(" ")[0])
-    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "expenses":
+
+    if not is_DM(ctx.message.channel) and (ctx.message.channel.name == "expenses" or ctx.message.channel.name == "bot"):
         if not fine_paid_message(ctx.message):
-            await ctx.send("Use `!help paid` to see the format")
+            await ctx.send("```Use $help paid to see the format```")
         else:
             message = ctx.message
             if message.mention_everyone:
@@ -99,76 +74,161 @@ async def paid(ctx):
             else:
                 mentions = message.mentions
                 if mentions.count(ctx.message.guild.get_member(ctx.author.id)) > 0:
-                    await ctx.send("`You can't pay for yourself!`")
+                    await ctx.send("```You can't pay for yourself!```")
                     return
             mentions = remove_bots(mentions)
-            print(mentions)
             await db_connector.pay(guild_id=message.guild.id, payee=message.author, paid_for=mentions, amount=get_amount(message), message=message)
             await ctx.message.add_reaction("👍🏽")
 
     else:
-        await ctx.send("This command can be used only in `expenses` channel")
+        await ctx.send("```This command can be used only in expenses channel```")
 
 
 @bot.command()
 async def stats(ctx):
     """Shows the current stats of a member regarding his/her expenses"""
 
-    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
+    if not is_DM(ctx.message.channel) and (ctx.message.channel.name == "current_stats" or ctx.message.channel.name == "bot"):
         results = await db_connector.get_data(guild_id=ctx.message.guild.id, user=ctx.message.author)
         if results == -1:
-            await ctx.send("`No stats to show`")
+            await ctx.send("```No stats to show```")
             return
 
         msg = ""
         for member in results.keys():
-            if results[member] >= 0:
-                msg += bot.get_user(int(member)).name + " owes you " + str(results[member])+"\n"
-            else:
-                msg += "You owe " + bot.get_user(int(member)).name + " " + str(results[member])+"\n"
+            if str(ctx.message.author.id) == member:
+                msg += "Your total expenditure till now is {0}".format(results[member])
 
-        await ctx.send("`"+msg+"`")
+            elif results[member] > 0:
+                msg += bot.get_user(int(member)).name + " owes you " + str(results[member])+"\n"
+            elif results[member] < 0:
+                msg += "You owe " + bot.get_user(int(member)).name + " " + str(abs(results[member]))+"\n"
+
+        await ctx.send("```"+msg+"```")
 
     else:
-        await ctx.send("This command can be used only in `current_stats` channel")
+        await ctx.send("```This command can be used only in current_stats channel```")
 
 
 @bot.command()
 async def unverified(ctx):
     """Shows all the members unverified payments"""
 
-    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
+    if not is_DM(ctx.message.channel) and (ctx.message.channel.name == "current_stats" or ctx.message.channel.name == "bot"):
         results = await db_connector.get_unverified(user=ctx.message.author, guild_id=ctx.message.guild.id)
         if results == -1:
-            await ctx.send("`No Unverified transactions`")
+            await ctx.send("```No Unverified transactions```")
             return
 
-        msg = ""
+        msg = "Your unverified payments\n"
         for result in results:
             msg += result['message']+"\n"
 
-        await ctx.send("`"+msg+"`")
+        await ctx.send("```"+msg+"```")
     else:
-        await ctx.send("This command can be used only in `current_stats` channel")
+        await ctx.send("```This command can be used only in current_stats channel```")
+
+
+@bot.command()
+async def unapproved(ctx):
+    """Shows all the members unverified payments"""
+
+    if not is_DM(ctx.message.channel) and (ctx.message.channel.name == "expenses" or ctx.message.channel.name == "bot"):
+        results = await db_connector.get_unapproved(user=ctx.message.author, guild_id=ctx.message.guild.id)
+        if results == -1:
+            await ctx.send("```No Unapproved transactions```")
+            return
+
+        msg = "Payments you did not approve\n"
+        for result in results:
+            msg += result['message']+"\n"
+
+        await ctx.send("```"+msg+"```")
+    else:
+        await ctx.send("```This command can be used only in expenses channel```")
 
 
 @bot.command()
 async def transactions(ctx):
     """Displays last 10 transaction made by the user"""
 
-    if not is_DM(ctx.message.channel) and ctx.message.channel.name == "current_stats":
+    if not is_DM(ctx.message.channel) and (ctx.message.channel.name == "current_stats" or ctx.message.channel.name == "bot"):
         results = await db_connector.get_transactions(guild_id=ctx.message.guild.id, user=ctx.message.author)
         if results == -1:
-            await ctx.send("`No transactions to show`")
+            await ctx.send("```No transactions to show```")
             return
 
-        msg = ""
+        msg = "Your last 10 transactions\n"
         for result in results:
             msg += result['message'] + "\n"
 
-        await ctx.send("`"+msg+"`")
+        await ctx.send("```"+msg+"```")
     else:
-        await ctx.send("This command can be used only in `current_stats` channel")
+        await ctx.send("```This command can be used only in current_stats channel```")
+
+
+@bot.command()
+async def help(ctx):
+    msg = "`@mention me or use $ before my supported commands`"
+    embed = discord.Embed(title="Supported Commands")
+
+    embed.add_field(name='paid', value='Use this when you are paying for someone. '
+                                       'The format is: `!paid mentions(ie the members '
+                                       'of the guild you are paying for) amount < description >` , '
+                                       'You can also give equations in place of amount like '
+                                       '!paid mentions 100/4 < desc > also works! \n'
+                                       ' `Example` ```$paid @Jack 500```')
+    embed.add_field(name='unverified', value='This shows a list of your unverified payments, '
+                                             'A payment (ie made using the paid command)'
+                                             ' is verified only if the members you paid for thumbs up your message.')
+    embed.add_field(name='stats', value='This can be used to know your current stats, '
+                                        'like how much you owe someone or someone else owes you!')
+    embed.add_field(name='transactions', value='This shows your last 10 transactions.')
+    embed.add_field(name='unapproved', value="This shows the payments you did not approve yet, One needs "
+                                             "to approve payments (made by `paid` command) by thumbing up the payments "
+                                             "in which he/she is mentioned")
+    embed.add_field(name='self', value="This helps to keep track of your own expenses, Want to manage your"
+                                       " budget? Then tell Saul about your personal expenses in DM through this "
+                                       "command.\n `Example` ```$self 500 for pizza!```")
+    embed.add_field(name='data', value='DM Saul "data" and he will show your personal transactions '
+                                       'along with your total expenses you have added using `self` command')
+    await ctx.send(msg, embed=embed)
+
+
+@bot.command()
+async def self(ctx):
+    await db_connector.add_self(message=ctx.message,
+                                user=ctx.message.author, amount=get_amount(ctx.message))
+    await ctx.send('Okay')
+
+
+@bot.command()
+async def data(ctx):
+    all_data = await db_connector.get_personal_data(user=ctx.message.author)
+    if all_data == -1:
+        await ctx.send("```No personal expenses to show```")
+        return
+    msg = ""
+    for personal_data in all_data[0]:
+        msg += personal_data + "\n"
+
+    msg += 'Your expenses till date amounts to {0}'.format(all_data[1])
+    await ctx.send('```'+msg+'```')
+
+
+@bot.event
+async def on_command_error(ctx, error):
+    embed = discord.Embed(title="Command not found!", description="Use !help "
+                                                                  "to see the available commands")
+
+    if type(error) is discord.ext.commands.errors.CommandNotFound:
+        await ctx.send(embed=embed)
+
+
+@bot.event
+async def on_ready():
+    game = discord.Game(name="Money laundering")
+    await bot.change_presence(status=discord.Status.online, activity=game)
 
 
 bot.run(os.getenv('TOKEN'))
